@@ -13,14 +13,67 @@ build-type:         Simple
 extra-doc-files:    CHANGELOG.md
 -- extra-source-files:
 
-common warnings
-    ghc-options: -Wall
+common shared-properties
+  ghc-options:
+        -Wall
+        -- -fno-warn-unused-matches
+        -- -fno-warn-unused-do-bind
+        -- -Werror=missing-methods
+        -- -Werror=incomplete-patterns
+        -- -fno-warn-unused-binds
+        -- -threaded
+        -- -rtsopts
+        -- "-with-rtsopts=-N4 -A64m -AL256m -I0"
+
+
+  default-language:    Haskell2010
+
+  default-extensions:
+                       ApplicativeDo
+                     , BangPatterns
+                     , BlockArguments
+                     , ConstraintKinds
+                     , DataKinds
+                     , DeriveDataTypeable
+                     , DeriveGeneric
+                     , DerivingStrategies
+                     , DerivingVia
+                     , ExtendedDefaultRules
+                     , FlexibleContexts
+                     , FlexibleInstances
+                     , GADTs
+                     , GeneralizedNewtypeDeriving
+                     , ImportQualifiedPost
+                     , LambdaCase
+                     , MultiParamTypeClasses
+                     , OverloadedStrings
+                     , QuasiQuotes
+                     , ScopedTypeVariables
+                     , StandaloneDeriving
+                     , TupleSections
+                     , TypeApplications
+                     , TypeFamilies
+
+
 
 library
-    import:           warnings
-    exposed-modules:  MyLib
-    -- other-modules:
+    import:          shared-properties
+
+    exposed-modules:
+      Data.Config.Suckless.Syntax
+
+    other-modules:
+        Data.Config.Suckless.Types
+      , Data.Config.Suckless.Parse.Megaparsec
+
     -- other-extensions:
     build-depends:    base ^>=4.15.1.0
+                    , bytestring
+                    , containers
+                    , megaparsec
+                    , prettyprinter
+                    , text
+
     hs-source-dirs:   lib
     default-language: Haskell2010
+
