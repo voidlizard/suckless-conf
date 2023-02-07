@@ -12,7 +12,9 @@ module Data.Config.Suckless.Syntax
   , IsLiteral(..)
   , pattern SymbolVal
   , pattern ListVal
-  , pattern LitVal
+  , pattern LitIntVal
+  , pattern LitStrVal
+  , pattern LitBoolVal
   )
   where
 
@@ -27,8 +29,15 @@ import Prettyprinter
 pattern SymbolVal :: Id -> Syntax c
 pattern SymbolVal v <- Symbol _ v
 
-pattern LitVal :: forall {c}. Id -> Syntax c
-pattern LitVal v <- Symbol _ v
+-- pattern LitVal :: forall {c}. Id -> Li
+pattern LitIntVal :: forall {c}. Integer -> Syntax c
+pattern LitIntVal v <- Literal _ (LitInt v)
+
+pattern LitStrVal :: forall {c}. Text -> Syntax c
+pattern LitStrVal v <- Literal _ (LitStr v)
+
+pattern LitBoolVal :: forall {c}. Bool -> Syntax c
+pattern LitBoolVal v <- Literal _ (LitBool v)
 
 pattern ListVal :: forall {c}. [Syntax c] -> Syntax c
 pattern ListVal v <- List _ v
