@@ -1,0 +1,11 @@
+
+
+fixme-comments   // #  --
+
+fixme-prefix     FIXME:     bugs issues   ; defines a fixme entity and it's categories
+
+fixme-files  doc/devlog **/*.hs
+fixme-files-ignore  .direnv/**  dist-newstyle/**
+
+
+
