@@ -1,32 +1,50 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
 module Data.Config.Suckless.Syntax
   ( Syntax(..)
-  , Context(..)
   , Id(..)
   , Literal(..)
+  , Context
   , HasContext(..)
+  , IsContext(..)
+  , IsLiteral(..)
   , pattern SymbolVal
+  , pattern ListVal
+  , pattern LitVal
   )
   where
 
-import GHC.Generics
-import Data.Text (Text)
 import Data.Data
-import Data.String
 import Data.Kind
+import Data.String
+import Data.Text (Text)
+import GHC.Generics
 
 import Prettyprinter
 
 pattern SymbolVal :: Id -> Syntax c
 pattern SymbolVal v <- Symbol _ v
 
-data family Context c ::  Type
+pattern LitVal :: forall {c}. Id -> Syntax c
+pattern LitVal v <- Symbol _ v
+
+pattern ListVal :: forall {c}. [Syntax c] -> Syntax c
+pattern ListVal v <- List _ v
+
+
+data family Context c :: Type
+
+class IsContext c where
+  noContext :: Context c
 
 class HasContext c a where
   setContext :: Context c -> a -> a
   getContext :: a -> Context c
+
+class IsLiteral a where
+  mkLit :: a -> Literal
 
 newtype Id =
   Id Text
@@ -38,6 +56,15 @@ data Literal =
   | LitInt   Integer
   | LitBool  Bool
   deriving stock (Eq,Ord,Data,Generic,Show)
+
+instance IsLiteral Text where
+  mkLit = LitStr
+
+instance IsLiteral Bool where
+  mkLit = LitBool
+
+instance IsLiteral Integer where
+  mkLit = LitInt
 
 data Syntax c
   = List    (Context c) [Syntax c]
@@ -69,5 +96,11 @@ instance Pretty Literal where
 
     LitBool b | b          -> "#t"
               | otherwise  -> "#f"
+
+
+deriving instance ( Data c
+                  , Data (Context c)
+                  , Typeable c
+                  ) => Data (Syntax c)
 
 
