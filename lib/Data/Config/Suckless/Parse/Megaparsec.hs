@@ -161,19 +161,23 @@ parseSyntax :: forall c . MegaConstraints c
 parseSyntax = parse (merely (syntax sc)) "input"
 
 top :: forall c . MegaConstraints c => Parser [Syntax c]
-top = sc >> many (topStmt <|> syntax scTop)
+top = many $ do
+  t <- topStmt
+  sc
+  pure t
 
-topStmt :: forall c . MegaConstraints c => Parser (Syntax c)
-topStmt = do
-  scTop
-
+topTerm :: forall c . MegaConstraints c => Parser (Syntax c)
+topTerm = do
+  sc
   co <- MegaContext . Just <$> getOffset
-
   s0 <- symbol scTop
   ss <- many (syntax scTop)
 
   void eol <|> eof
   pure $ List co (s0:ss)
+
+topStmt :: forall c . MegaConstraints c => Parser (Syntax c)
+topStmt = topTerm <|> syntax scTop
 
 parseTop :: forall c . MegaConstraints c
          => String -> Either ParseFail [Syntax c]

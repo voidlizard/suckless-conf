@@ -44,9 +44,9 @@ outputs = { self, nixpkgs, haskell-flake-utils, ... }@inputs:
       # shell = ./shell.nix
 
       # Additional build intputs of the default shell
-      # shellExtBuildInputs = {pkgs}: with pkgs; [
-      #   haskellPackages.haskell-language-server
-      # ];
+      shellExtBuildInputs = {pkgs}: with pkgs; [
+        haskellPackages.haskell-language-server
+      ];
 
       # Wether to build hoogle in the default shell
       # shellWithHoogle = true;
