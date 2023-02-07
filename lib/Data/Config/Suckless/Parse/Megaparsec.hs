@@ -184,3 +184,7 @@ parseTop :: forall c . MegaConstraints c
 
 parseTop = parse top "input"
 
+deriving instance Data (Context MegaParsec)
+
+
+
