@@ -163,7 +163,10 @@ parseSyntax = parse (merely (syntax sc)) "input"
 top :: forall c . MegaConstraints c => Parser [Syntax c]
 top = do
   sc
-  many topStmt
+  many $ do
+    t <- topStmt
+    sc
+    pure t
 
 topTerm :: forall c . MegaConstraints c => Parser (Syntax c)
 topTerm = do
