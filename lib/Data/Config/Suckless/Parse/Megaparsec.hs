@@ -65,7 +65,7 @@ stringLit sp = L.lexeme sp $ do
   where
     str = do
       s <- dquot >> manyTill L.charLiteral dquot
-      pure $ Text.pack (mconcat [ showLitChar c "" | c <- s ])
+      pure $ Text.pack s -- (mconcat [ showLitChar c "" | c <- s ])
 
 -- FIXME: position!
 intLit :: forall c . MegaConstraints c
