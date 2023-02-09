@@ -168,13 +168,13 @@ top = many $ do
 
 topTerm :: forall c . MegaConstraints c => Parser (Syntax c)
 topTerm = do
-  sc
-  co <- MegaContext . Just <$> getOffset
-  s0 <- symbol scTop
-  ss <- many (syntax scTop)
+  L.lexeme sc $ do
+    co <- MegaContext . Just <$> getOffset
+    s0 <- symbol scTop
+    ss <- many (syntax scTop)
 
-  void eol <|> eof
-  pure $ List co (s0:ss)
+    void eol <|> eof
+    pure $ List co (s0:ss)
 
 topStmt :: forall c . MegaConstraints c => Parser (Syntax c)
 topStmt = topTerm <|> syntax scTop
