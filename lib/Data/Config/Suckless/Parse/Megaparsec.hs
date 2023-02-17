@@ -82,17 +82,23 @@ intLit sp = L.lexeme sp $ do
     dec'= signed sc L.decimal
 
 symbolChars :: [Char]
-symbolChars = "!$%&|*+-/:<=>?@^_~#.'"
+symbolChars = "-!$%&|*+/:<=>?@^_~#.'"
 
 symbolChar :: Parser Char
 symbolChar = oneOf symbolChars
+
+symbolCharNoMinus :: Parser Char
+symbolCharNoMinus = oneOf symbolChars'
+  where
+    symbolChars' = dropWhile (== '-') symbolChars
 
 -- FIXME: position!
 symbol :: forall c . MegaConstraints c
        => Parser () -> Parser (Syntax c)
 symbol sp = L.lexeme sp $ do
   co <- MegaContext . Just <$> getOffset
-  h <- letterChar <|> symbolChar
+  h <- letterChar <|> symbolCharNoMinus
+  -- FIXME: dont-start-symbol-with-minus
   t <- many (letterChar <|> digitChar <|> symbolChar)
   case h:t of
     "#t"  -> pure $ Literal co (mkLit True)
