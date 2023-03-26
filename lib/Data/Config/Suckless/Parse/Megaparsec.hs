@@ -27,7 +27,9 @@ data MegaParsec =
   MegaParsec
   deriving (Data,Typeable,Generic)
 
-newtype instance Context MegaParsec = MegaContext (Maybe Int)
+newtype instance Context MegaParsec =
+  MegaContext (Maybe Int)
+  deriving (Eq,Ord,Generic)
 
 instance IsContext MegaParsec where
   noContext = MegaContext Nothing

@@ -81,6 +81,10 @@ data Syntax c
   | Literal (Context c) Literal
   deriving stock (Generic)
 
+deriving instance Eq (Context c) => Eq (Syntax c)
+deriving instance Ord (Context c) => Ord (Syntax c)
+
+
 instance HasContext c (Syntax c) where
   setContext c1 = \case
     List _ v    -> List c1 v
