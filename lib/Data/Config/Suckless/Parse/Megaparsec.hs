@@ -1,4 +1,5 @@
 {-# Language ConstraintKinds #-}
+{-# Language UndecidableInstances #-}
 module Data.Config.Suckless.Parse.Megaparsec
   ( parseSyntax
   , parseTop
@@ -41,6 +42,9 @@ type MegaConstraints c = ( c ~ MegaParsec, IsContext c )
 type Parser r = Parsec () [Char] r
 
 type ParseFail = ParseErrorBundle [Char] ()
+
+deriving instance Eq (Context MegaParsec) => Eq (Syntax MegaParsec)
+deriving instance Ord (Context MegaParsec) => Ord (Syntax MegaParsec)
 
 sc :: Parser ()
 sc = do
