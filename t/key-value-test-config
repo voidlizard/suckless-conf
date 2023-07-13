@@ -1,0 +1,4 @@
+; comment
+foo "a"
+bar "a"
+bar "b"

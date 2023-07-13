@@ -12,7 +12,6 @@ import Data.Config.Suckless.Syntax
 
 import Control.Applicative()
 
-import Data.Char (showLitChar)
 import Data.Text qualified as Text
 
 import Control.Monad
