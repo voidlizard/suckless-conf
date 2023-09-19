@@ -71,12 +71,15 @@ library
 
     -- other-extensions:
     build-depends:    base >=4.15.1.0
+                    , aeson
                     , bytestring
                     , containers
                     , megaparsec
                     , prettyprinter
                     , safe
+                    , scientific
                     , text
+                    , vector
 
     hs-source-dirs:   lib
     default-language: Haskell2010
@@ -86,6 +89,8 @@ test-suite spec
   main-is: Spec.hs
   other-modules:
       Data.Config.Suckless.KeyValueSpec
+      Data.Config.Suckless.AesonSpec
+
   hs-source-dirs:
       test
   ghc-options:
@@ -97,9 +102,13 @@ test-suite spec
       hspec-discover:hspec-discover
   build-depends:      base
                     , hspec
+                    , aeson
+                    , scientific
                     , suckless-conf
                     , containers
                     , mtl
+                    , prettyprinter
+                    , interpolatedstring-perl6
 
   default-language: Haskell2010
   default-extensions:

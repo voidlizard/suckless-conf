@@ -15,13 +15,16 @@ import Control.Applicative()
 import Data.Text qualified as Text
 
 import Control.Monad
+import Data.Functor
 import Text.Megaparsec
-import Text.Megaparsec.Char (hspace1,space1,char,letterChar,digitChar,eol)
+import Text.Megaparsec.Char (hspace1,space1,char,letterChar,digitChar,eol,string)
 import Text.Megaparsec.Char.Lexer qualified as L
 import Text.Megaparsec.Char.Lexer ( signed )
 import Data.String(IsString(..))
 import GHC.Generics
 import Data.Data
+import Safe
+import Data.Scientific
 
 data MegaParsec =
   MegaParsec
@@ -72,19 +75,39 @@ stringLit sp = L.lexeme sp $ do
       s <- dquot >> manyTill L.charLiteral dquot
       pure $ Text.pack s -- (mconcat [ showLitChar c "" | c <- s ])
 
--- FIXME: position!
-intLit :: forall c . MegaConstraints c
+numLit :: forall c . MegaConstraints c
        => Parser () -> Parser (Syntax c)
 
-intLit sp = L.lexeme sp $ do
+numLit sp = L.lexeme sp $ do
   co <- MegaContext . Just <$> getOffset
-  Literal co . LitInt <$> choice [hex, oct, bin, dec, dec']
+
+  s <- try (char '-' >> pure True) <|> pure False
+
+  base <- choice [ string "0x" >> pure 16
+                 , string "0o" >> pure 8
+                 , string "0b" >> pure 2
+                 , pure (10 :: Int)
+                 ]
+
+  val <- case base of
+          16 -> LitInt . sign s <$> L.hexadecimal
+          8  -> LitInt . sign s <$> L.octal
+          2  -> LitInt . sign s <$> L.binary
+          10 -> do
+                  ns <- many (digitChar <|> oneOf ['.', 'e', '-'])
+                  let v =     (LitInt . sign s <$> readMay @Integer ns)
+                          <|> (LitScientific . sign s <$> readMay @Scientific ns)
+                  case v of
+                    Just x  -> pure x
+                    Nothing -> fail "not a numeric literal"
+
+          _ -> fail "not a numeric literal"
+
+  pure $ Literal co val
+
   where
-    hex = L.symbol sc "0x" >> L.hexadecimal
-    oct = L.symbol sc "0o" >> L.octal
-    bin = L.symbol sc "0b" >> L.binary
-    dec = L.decimal
-    dec'= signed sc L.decimal
+    sign :: forall a . Num a => Bool -> a -> a
+    sign x = if x then negate else id
 
 symbolChars :: [Char]
 symbolChars = "-!$%&|*+/:<=>?@^_~#.'"
@@ -95,7 +118,7 @@ symbolChar = oneOf symbolChars
 symbolCharNoMinus :: Parser Char
 symbolCharNoMinus = oneOf symbolChars'
   where
-    symbolChars' = dropWhile (== '-') symbolChars
+    symbolChars' = dropWhile (`elem` "-") symbolChars
 
 -- FIXME: position!
 symbol :: forall c . MegaConstraints c
@@ -152,9 +175,10 @@ list sp = L.lexeme sp $ do
 
 syntax :: forall c . MegaConstraints c
       => Parser () -> Parser (Syntax c)
+
 syntax sp = choice [ symbol sp
+                   , numLit sp
                    , stringLit sp
-                   , intLit sp
                    , list sp
                    ]
 

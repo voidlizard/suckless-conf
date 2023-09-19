@@ -15,6 +15,7 @@ module Data.Config.Suckless.Syntax
   , pattern LitIntVal
   , pattern LitStrVal
   , pattern LitBoolVal
+  , pattern LitScientificVal
   )
   where
 
@@ -22,7 +23,12 @@ import Data.Data
 import Data.Kind
 import Data.String
 import Data.Text (Text)
+import Data.Scientific
 import GHC.Generics
+import Data.Maybe
+import Data.Aeson
+import Data.Aeson.Key
+import qualified Data.Vector as V
 
 import Prettyprinter
 
@@ -32,6 +38,9 @@ pattern SymbolVal v <- Symbol _ v
 -- pattern LitVal :: forall {c}. Id -> Li
 pattern LitIntVal :: forall {c}. Integer -> Syntax c
 pattern LitIntVal v <- Literal _ (LitInt v)
+
+pattern LitScientificVal :: forall {c}. Scientific -> Syntax c
+pattern LitScientificVal v <- Literal _ (LitScientific v)
 
 pattern LitStrVal :: forall {c}. Text -> Syntax c
 pattern LitStrVal v <- Literal _ (LitStr v)
@@ -63,6 +72,7 @@ newtype Id =
 data Literal =
     LitStr   Text
   | LitInt   Integer
+  | LitScientific Scientific
   | LitBool  Bool
   deriving stock (Eq,Ord,Data,Generic,Show)
 
@@ -104,6 +114,7 @@ instance Pretty Literal where
   pretty = \case
     LitStr s  -> dquotes (pretty s)
     LitInt i  -> pretty i
+    LitScientific v  -> viaShow v
 
     LitBool b | b          -> "#t"
               | otherwise  -> "#f"
@@ -113,5 +124,30 @@ deriving instance ( Data c
                   , Data (Context c)
                   , Typeable c
                   ) => Data (Syntax c)
+
+
+
+instance ToJSON Literal where
+    toJSON (LitStr s)       = String s
+    toJSON (LitInt i)       = Number (fromInteger i)
+    toJSON (LitScientific s) = Number s
+    toJSON (LitBool b)      = Bool b
+
+instance ToJSON (Syntax c) where
+    toJSON (Symbol _ (Id "#nil")) = Null
+    toJSON (Symbol _ (Id s)) = String s
+    toJSON (Literal _ l) = toJSON l
+    toJSON (List _ items) =
+        case items of
+            (Symbol _ "object" : rest) ->
+                object $ mapMaybe pairToKeyValue rest
+            _ -> Array . V.fromList $ fmap toJSON items
+
+      where
+        pairToKeyValue :: Syntax c -> Maybe (Key, Value)
+        pairToKeyValue (List _ [SymbolVal (Id k), SymbolVal ":", v]) = Just (fromText k .= toJSON v)
+        pairToKeyValue (List _ [LitStrVal k, SymbolVal ":", v]) = Just (fromText k .= toJSON v)
+        pairToKeyValue _ = Nothing
+
 
 
