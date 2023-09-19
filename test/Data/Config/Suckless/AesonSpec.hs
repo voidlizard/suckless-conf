@@ -1,5 +1,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Data.Config.Suckless.AesonSpec (spec) where
 
@@ -9,12 +10,13 @@ import Data.Config.Suckless.Syntax
 import Data.Functor
 import Data.Function
 import Data.Scientific
--- import Data.Set (Set)
--- import qualified Data.Set as Set
-import Prettyprinter
+
+import GHC.Generics hiding (C)
 import Text.InterpolatedString.Perl6 (qc,q)
 import Data.Aeson
+import Data.Maybe
 import Test.Hspec
+import Prettyprinter
 
 
 readConfig :: String -> IO [Syntax C]
@@ -22,6 +24,17 @@ readConfig s = do
   pure $ parseTop s & either mempty id
   -- print $ pretty f
   -- pure f
+
+data SomeData =
+  SomeData
+  { someDataKey1 :: Int
+  , someDataKey2 :: String
+  , someDataKey3 :: [Scientific]
+  }
+  deriving stock (Generic,Show,Eq)
+
+instance ToJSON SomeData
+instance FromJSON SomeData
 
 spec :: Spec
 spec = do
@@ -81,6 +94,20 @@ spec = do
       Just s `shouldBe` s1
 
 
+    it "serializes object to syntax"  $ do
+      let some = SomeData 1 "some-data" [1, 2, 3, 4, 5, 10]
 
+      let someSyn = case fromJSON @(Syntax ()) (toJSON some) of
+                      Success syn -> Just syn
+                      _           -> Nothing
+
+      print $ pretty someSyn
+
+      let json = fromJust $ someSyn <&> toJSON
+
+      let someObject = fromJSON @SomeData json
+
+      print someObject
+      someObject `shouldBe` Success some
 
 

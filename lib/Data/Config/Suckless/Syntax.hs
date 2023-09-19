@@ -28,7 +28,9 @@ import GHC.Generics
 import Data.Maybe
 import Data.Aeson
 import Data.Aeson.Key
-import qualified Data.Vector as V
+import Data.Aeson.KeyMap qualified as Aeson
+import Data.Vector qualified as V
+import Data.Traversable (forM)
 
 import Prettyprinter
 
@@ -56,6 +58,11 @@ data family Context c :: Type
 
 class IsContext c where
   noContext :: Context c
+
+data instance Context () = EmptyContext
+
+instance IsContext () where
+  noContext = EmptyContext
 
 class HasContext c a where
   setContext :: Context c -> a -> a
@@ -149,5 +156,23 @@ instance ToJSON (Syntax c) where
         pairToKeyValue (List _ [LitStrVal k, SymbolVal ":", v]) = Just (fromText k .= toJSON v)
         pairToKeyValue _ = Nothing
 
+
+
+instance FromJSON (Syntax ()) where
+    parseJSON (String t) = pure $ Literal noContext (LitStr t)
+    parseJSON (Number n)
+        | isInteger n = pure $ Literal noContext (LitInt (floor n))
+        | otherwise   = pure $ Literal noContext (LitScientific n)
+    parseJSON (Bool b)  = pure $ Literal noContext (LitBool b)
+    parseJSON (Array a) = List noContext <$> mapM parseJSON (V.toList a)
+    parseJSON (Object o) = do
+        pairs <- forM (Aeson.toList o) $ \(key, value) -> do
+            valueSyntax <- parseJSON value
+            pure $ List noContext [ Symbol noContext (Id (toText key))
+                                  , Symbol noContext ":"
+                                  , valueSyntax
+                                  ]
+        pure $ List noContext (Symbol noContext (Id "object") : pairs)
+    parseJSON _ = fail "Cannot parse JSON to Syntax"
 
 
