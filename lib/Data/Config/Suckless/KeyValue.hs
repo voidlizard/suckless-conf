@@ -13,6 +13,7 @@ import Data.Maybe
 import Data.Scientific
 import Data.Aeson
 import Prettyprinter
+import Control.Monad.Reader
 import Safe
 
 type C = MegaParsec
@@ -30,6 +31,12 @@ class Monad m => HasConf m where
 pattern Key :: forall {c}. Id -> [Syntax c] -> [Syntax c]
 pattern Key n ns <- SymbolVal  n : ns
 
+
+instance HasConf (Reader [Syntax C]) where
+  getConf = ask
+
+instance Monad m => HasConf (ReaderT [Syntax C] m) where
+  getConf = ask
 
 instance {-# OVERLAPPABLE #-} (HasConf m, HasCfgKey a (Maybe Integer) m) => HasCfgValue a (Maybe Integer) m where
   cfgValue = lastMay . val <$> getConf
