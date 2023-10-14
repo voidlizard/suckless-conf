@@ -4,7 +4,9 @@
 
 module Data.Config.Suckless.KeyValueSpec (spec) where
 
+import Data.Function
 import Control.Monad.IO.Class
+import Control.Monad.Reader
 import Data.Config.Suckless.KeyValue
 import Data.Config.Suckless.Parse
 import Data.Config.Suckless.Syntax
@@ -39,55 +41,55 @@ data Sci5
 data O1
 data O2
 
-instance MonadIO m => HasCfgKey FirstKey (Maybe String) m where
+instance Monad m => HasCfgKey FirstKey (Maybe String) m where
   key = "foo"
 
-instance MonadIO m => HasCfgKey SecondKey (Set String) m where
+instance Monad m => HasCfgKey SecondKey (Set String) m where
   key = "bar"
 
-instance MonadIO m => HasCfgKey ThirdKey (Maybe String) m where
+instance Monad m => HasCfgKey ThirdKey (Maybe String) m where
   key = "baz"
 
-instance MonadIO m => HasCfgKey Int1 b m where
+instance Monad m => HasCfgKey Int1 b m where
   key = "int1"
 
-instance MonadIO m => HasCfgKey Int2 b m where
+instance Monad m => HasCfgKey Int2 b m where
   key = "int2"
 
-instance MonadIO m => HasCfgKey Int3 b m where
+instance Monad m => HasCfgKey Int3 b m where
   key = "int3"
 
-instance MonadIO m => HasCfgKey Int4 b m where
+instance Monad m => HasCfgKey Int4 b m where
   key = "int4"
 
-instance MonadIO m => HasCfgKey Int5 b m where
+instance Monad m => HasCfgKey Int5 b m where
   key = "int5"
 
-instance MonadIO m => HasCfgKey Int6 b m where
+instance Monad m => HasCfgKey Int6 b m where
   key = "int6"
 
-instance MonadIO m => HasCfgKey Sci1 b m where
+instance Monad m => HasCfgKey Sci1 b m where
   key = "sci1"
 
-instance MonadIO m => HasCfgKey Sci2 b m where
+instance Monad m => HasCfgKey Sci2 b m where
   key = "sci2"
 
-instance MonadIO m => HasCfgKey Sci3 b m where
+instance Monad m => HasCfgKey Sci3 b m where
   key = "sci3"
 
-instance MonadIO m => HasCfgKey Sci4 b m where
+instance Monad m => HasCfgKey Sci4 b m where
   key = "sci4"
 
-instance MonadIO m => HasCfgKey Sci5 b m where
+instance Monad m => HasCfgKey Sci5 b m where
   key = "sci5"
 
-instance MonadIO m => HasCfgKey O1 b m where
+instance Monad m => HasCfgKey O1 b m where
   key = "some-object"
 
-instance MonadIO m => HasCfgKey O2 b m where
+instance Monad m => HasCfgKey O2 b m where
   key = "another-object"
 
-instance (Monad m, MonadIO m) => HasConf m where
+instance HasConf IO where
   getConf = liftIO readConfig
 
 readConfig :: IO [Syntax C]
@@ -160,5 +162,19 @@ spec = do
       |]
       o2 <- cfgValue @O2 @(Maybe Value)
       o2 `shouldBe` decode wtf2
+
+
+    it "works in Reader" $ do
+
+      let cfg = [qc|
+int1 123
+
+|]
+      let conf = parseTop cfg & either mempty id
+
+      let v = runReader (cfgValue @Int1 @(Maybe Int)) conf
+
+      v `shouldBe` Just 123
+
 
 

@@ -32,10 +32,7 @@ pattern Key :: forall {c}. Id -> [Syntax c] -> [Syntax c]
 pattern Key n ns <- SymbolVal  n : ns
 
 
-instance HasConf (Reader [Syntax C]) where
-  getConf = ask
-
-instance Monad m => HasConf (ReaderT [Syntax C] m) where
+instance {-# OVERLAPPABLE #-} Monad m => HasConf (ReaderT [Syntax C] m) where
   getConf = ask
 
 instance {-# OVERLAPPABLE #-} (HasConf m, HasCfgKey a (Maybe Integer) m) => HasCfgValue a (Maybe Integer) m where
@@ -45,6 +42,13 @@ instance {-# OVERLAPPABLE #-} (HasConf m, HasCfgKey a (Maybe Integer) m) => HasC
                 | ListVal @C (Key s [LitIntVal e]) <- syn, s == key @a @(Maybe Integer) @m
                 ]
 
+
+instance {-# OVERLAPPABLE #-} (HasConf m, HasCfgKey a (Maybe Int) m) => HasCfgValue a (Maybe Int) m where
+  cfgValue = lastMay . val <$> getConf
+    where
+      val syn = [ fromIntegral e
+                | ListVal @C (Key s [LitIntVal e]) <- syn, s == key @a @(Maybe Int) @m
+                ]
 
 instance {-# OVERLAPPABLE #-} (HasConf m, HasCfgKey a (Maybe Scientific) m) => HasCfgValue a (Maybe Scientific) m where
   cfgValue = lastMay . val <$> getConf
