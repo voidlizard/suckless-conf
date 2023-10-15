@@ -47,7 +47,7 @@ instance {-# OVERLAPPABLE #-} (HasConf m, HasCfgKey a (Maybe Int) m) => HasCfgVa
   cfgValue = lastMay . val <$> getConf
     where
       val syn = [ fromIntegral e
-                | ListVal @C (Key s [LitIntVal e]) <- syn, s == key @a @(Maybe Int) @m
+                | ListVal (Key s [LitIntVal e]) <- syn, s == key @a @(Maybe Int) @m
                 ]
 
 instance {-# OVERLAPPABLE #-} (HasConf m, HasCfgKey a (Maybe Scientific) m) => HasCfgValue a (Maybe Scientific) m where
