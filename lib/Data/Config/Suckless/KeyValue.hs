@@ -22,7 +22,7 @@ class Monad m => HasCfgKey a b m where
   -- type family CfgValue a :: Type
   key :: Id
 
-class (Monad m, HasCfgKey a b m) => HasCfgValue a b m where
+class Monad m => HasCfgValue a b m where
   cfgValue :: m b
 
 class Monad m => HasConf m where
