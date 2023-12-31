@@ -71,7 +71,7 @@ instance {-# OVERLAPPABLE #-} (HasConf m, HasCfgKey a (Maybe Value) m) => HasCfg
                 | ListVal (Key s [v@ListVal{}]) <- syn, s == key @a @(Maybe Value) @m
                 ]
 
-instance {-# OVERLAPPABLE #-} (HasConf m, Ord b, IsString b, HasCfgKey a (Maybe b) m) => HasCfgValue a (Maybe b) m where
+instance {-# OVERLAPPABLE #-} (HasConf m, IsString b, HasCfgKey a (Maybe b) m) => HasCfgValue a (Maybe b) m where
   cfgValue = lastMay . val <$> getConf
     where
       val syn = [ fromString (show $ pretty e)
