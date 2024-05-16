@@ -1,7 +1,5 @@
 module Data.Config.Suckless.Parse.Fuzzy
-  ( parseTop
-  , parseSyntax
-  -- , C
+  ( ParseSExp(..)
   ) where
 
 import Data.Config.Suckless.Syntax
@@ -9,18 +7,21 @@ import Data.Text.Fuzzy.SExp qualified as P
 import Data.Text.Fuzzy.SExp (C0(..),SExpParseError,ForMicroSexp(..))
 
 import Data.Functor
-import Data.Text
+import Data.Text as Text
 import Control.Monad.Except
 import Control.Monad.Identity
-import Data.Coerce
 
+class ParseSExp what where
+  parseTop :: what -> Either SExpParseError [Syntax C]
+  parseSyntax :: what -> Either SExpParseError (Syntax C)
 
-parseTop :: Text -> Either SExpParseError [Syntax C]
-parseTop what = runIdentity (runExceptT (P.parseTop  what)) <&> fmap toSyntax
+instance ParseSExp Text where
+  parseTop what = runIdentity (runExceptT (P.parseTop  what)) <&> fmap toSyntax
+  parseSyntax txt = runIdentity (runExceptT (P.parseSexp txt)) <&> toSyntax
 
-parseSyntax :: Text -> Either SExpParseError (Syntax C)
-parseSyntax txt = runIdentity (runExceptT (P.parseSexp txt)) <&> toSyntax
-
+instance ParseSExp String where
+  parseTop what = runIdentity (runExceptT (P.parseTop  (Text.pack what))) <&> fmap toSyntax
+  parseSyntax txt = runIdentity (runExceptT (P.parseSexp (Text.pack txt))) <&> toSyntax
 
 toSyntax :: P.MicroSexp C0 -> Syntax C
 toSyntax = \case
