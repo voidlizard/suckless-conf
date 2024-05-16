@@ -2,12 +2,14 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Data.Config.Suckless.Syntax
   ( Syntax(..)
   , Id(..)
   , Literal(..)
-  , Context
-  , HasContext(..)
+  , HasContext
+  , C(..)
+  , Context(..)
   , IsContext(..)
   , IsLiteral(..)
   , pattern SymbolVal
@@ -24,8 +26,10 @@ import Data.Kind
 import Data.String
 import Data.Text (Text)
 import Data.Scientific
-import GHC.Generics
+import GHC.Generics (Generic(..))
 import Data.Maybe
+-- import GHC.Generics( Fixity(..) )
+-- import Data.Data as Data
 import Data.Aeson
 import Data.Aeson.Key
 import Data.Aeson.KeyMap qualified as Aeson
@@ -38,19 +42,19 @@ pattern SymbolVal :: Id -> Syntax c
 pattern SymbolVal v <- Symbol _ v
 
 -- pattern LitVal :: forall {c}. Id -> Li
-pattern LitIntVal :: forall {c}. Integer -> Syntax c
+pattern LitIntVal :: Integer -> Syntax c
 pattern LitIntVal v <- Literal _ (LitInt v)
 
-pattern LitScientificVal :: forall {c}. Scientific -> Syntax c
+pattern LitScientificVal :: Scientific -> Syntax c
 pattern LitScientificVal v <- Literal _ (LitScientific v)
 
-pattern LitStrVal :: forall {c}. Text -> Syntax c
+pattern LitStrVal :: Text -> Syntax c
 pattern LitStrVal v <- Literal _ (LitStr v)
 
-pattern LitBoolVal :: forall {c}. Bool -> Syntax c
+pattern LitBoolVal :: Bool -> Syntax c
 pattern LitBoolVal v <- Literal _ (LitBool v)
 
-pattern ListVal :: forall {c}. [Syntax c] -> Syntax c
+pattern ListVal :: [Syntax c] -> Syntax c
 pattern ListVal v <- List _ v
 
 
@@ -65,8 +69,6 @@ instance IsContext () where
   noContext = EmptyContext
 
 class HasContext c a where
-  setContext :: Context c -> a -> a
-  getContext :: a -> Context c
 
 class IsLiteral a where
   mkLit :: a -> Literal
@@ -92,6 +94,21 @@ instance IsLiteral Bool where
 instance IsLiteral Integer where
   mkLit = LitInt
 
+data C = C
+         deriving stock (Eq,Ord,Show,Data,Typeable,Generic)
+
+-- simple, yet sufficient context
+--  Integer may be offset, maybe line number,
+--  token number, whatever
+--  it's up to parser to use this context for
+--  error printing, etc
+newtype instance (Context C) =
+  SimpleContext { fromSimpleContext :: Maybe Integer }
+  deriving stock (Eq,Ord,Show,Data,Typeable,Generic)
+
+instance IsContext C where
+  noContext = SimpleContext Nothing
+
 data Syntax c
   = List    (Context c) [Syntax c]
   | Symbol  (Context c) Id
@@ -99,17 +116,14 @@ data Syntax c
   deriving stock (Generic)
 
 
+instance Eq (Syntax c) where
+  (==) (Literal _ a) (Literal _ b) = a == b
+  (==) (Symbol _ a)  (Symbol _ b) = a == b
+  (==) (List _ a)    (List _ b) = a == b
+  (==) _ _ = False
 
-instance HasContext c (Syntax c) where
-  setContext c1 = \case
-    List _ v    -> List c1 v
-    Symbol _ v  -> Symbol c1 v
-    Literal _ v -> Literal c1 v
-
-  getContext = \case
-    List x _ -> x
-    Symbol x _ -> x
-    Literal x _ -> x
+deriving instance (Data (Context ())) => Data (Syntax ())
+-- deriving instance (Data (Context ())) => Data (Syntax ())
 
 instance Pretty (Syntax c) where
   pretty (Literal _ ast) = pretty ast
@@ -125,13 +139,6 @@ instance Pretty Literal where
 
     LitBool b | b          -> "#t"
               | otherwise  -> "#f"
-
-
-deriving instance ( Data c
-                  , Data (Context c)
-                  , Typeable c
-                  ) => Data (Syntax c)
-
 
 
 instance ToJSON Literal where
@@ -157,8 +164,7 @@ instance ToJSON (Syntax c) where
         pairToKeyValue _ = Nothing
 
 
-
-instance FromJSON (Syntax ()) where
+instance IsContext c => FromJSON (Syntax c) where
     parseJSON (String t) = pure $ Literal noContext (LitStr t)
     parseJSON (Number n)
         | isInteger n = pure $ Literal noContext (LitInt (floor n))

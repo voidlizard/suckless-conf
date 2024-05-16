@@ -2,14 +2,25 @@
 description = "suckless-cong: sexp based configs";
 
 inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs?rev=442d407992384ed9c0e6d352de75b69079904e4e";
     haskell-flake-utils.url = "github:ivanovs-4/haskell-flake-utils";
+
+    fuzzy.url =
+      # "git+http://git.hbs2/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?ref=sexp-parser&rev=bd3a38904864d5cc333974e7b029412607b46871";
+      "git+http://git.hbs2/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?ref=sexp-parser&rev=b0a7f96d6569d16b0d27c2f9477d94e5ee39df66";
+
 };
 
-outputs = { self, nixpkgs, haskell-flake-utils, ... }@inputs:
+outputs = { self, fuzzy, nixpkgs, haskell-flake-utils, ... }@inputs:
+
+
     haskell-flake-utils.lib.simpleCabal2flake {
+
       inherit self nixpkgs;
       # systems = [ "x86_64-linux" ];
+
+      # wtf = import fetcher-flake.out.outPath;
+      # project-b = import fuzzy.out.outPath;
 
       name = "suckless-conf";
 
@@ -41,7 +52,10 @@ outputs = { self, nixpkgs, haskell-flake-utils, ... }@inputs:
       # };
 
       # Maps to the devShell output. Pass in a shell.nix file or function
-      # shell = ./shell.nix
+
+      haskellFlakes = with inputs; [
+        fuzzy
+      ];
 
       # Additional build intputs of the default shell
       shellExtBuildInputs = {pkgs}: with pkgs; [

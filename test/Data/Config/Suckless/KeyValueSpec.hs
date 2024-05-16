@@ -1,5 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Data.Config.Suckless.KeyValueSpec (spec) where
@@ -12,12 +14,15 @@ import Data.Config.Suckless.Parse
 import Data.Config.Suckless.Syntax
 import Data.Functor
 import Data.Scientific
+import Data.Text.IO qualified as Text
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Prettyprinter
 import Data.Aeson
 import Text.InterpolatedString.Perl6 (qc,q)
+import Control.Monad.Identity
 import Test.Hspec
+
 
 data FirstKey
 
@@ -41,52 +46,52 @@ data Sci5
 data O1
 data O2
 
-instance Monad m => HasCfgKey FirstKey (Maybe String) m where
+instance HasCfgKey FirstKey (Maybe String) where
   key = "foo"
 
-instance Monad m => HasCfgKey SecondKey (Set String) m where
+instance HasCfgKey SecondKey (Set String) where
   key = "bar"
 
-instance Monad m => HasCfgKey ThirdKey (Maybe String) m where
+instance HasCfgKey ThirdKey (Maybe String) where
   key = "baz"
 
-instance Monad m => HasCfgKey Int1 b m where
+instance HasCfgKey Int1 b where
   key = "int1"
 
-instance Monad m => HasCfgKey Int2 b m where
+instance HasCfgKey Int2 b where
   key = "int2"
 
-instance Monad m => HasCfgKey Int3 b m where
+instance HasCfgKey Int3 b where
   key = "int3"
 
-instance Monad m => HasCfgKey Int4 b m where
+instance HasCfgKey Int4 b  where
   key = "int4"
 
-instance Monad m => HasCfgKey Int5 b m where
+instance HasCfgKey Int5 b where
   key = "int5"
 
-instance Monad m => HasCfgKey Int6 b m where
+instance HasCfgKey Int6 b where
   key = "int6"
 
-instance Monad m => HasCfgKey Sci1 b m where
+instance HasCfgKey Sci1 b where
   key = "sci1"
 
-instance Monad m => HasCfgKey Sci2 b m where
+instance HasCfgKey Sci2 b where
   key = "sci2"
 
-instance Monad m => HasCfgKey Sci3 b m where
+instance HasCfgKey Sci3 b where
   key = "sci3"
 
-instance Monad m => HasCfgKey Sci4 b m where
+instance HasCfgKey Sci4 b where
   key = "sci4"
 
-instance Monad m => HasCfgKey Sci5 b m where
+instance HasCfgKey Sci5 b where
   key = "sci5"
 
-instance Monad m => HasCfgKey O1 b m where
+instance HasCfgKey O1 b where
   key = "some-object"
 
-instance Monad m => HasCfgKey O2 b m where
+instance HasCfgKey O2 b where
   key = "another-object"
 
 instance HasConf IO where
@@ -95,7 +100,7 @@ instance HasConf IO where
 readConfig :: IO [Syntax C]
 readConfig = do
   let configFilePath = "t/key-value-test-config"
-  f <- readFile configFilePath <&> parseTop <&> either mempty id
+  f <- Text.readFile configFilePath <&> parseTop <&> either mempty id
   print $ pretty f
   pure f
 
