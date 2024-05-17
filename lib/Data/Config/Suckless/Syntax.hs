@@ -113,7 +113,7 @@ data Syntax c
   = List    (Context c) [Syntax c]
   | Symbol  (Context c) Id
   | Literal (Context c) Literal
-  deriving stock (Generic)
+  deriving stock (Generic,Typeable)
 
 
 instance Eq (Syntax c) where
@@ -123,7 +123,7 @@ instance Eq (Syntax c) where
   (==) _ _ = False
 
 deriving instance (Data (Context ())) => Data (Syntax ())
--- deriving instance (Data (Context ())) => Data (Syntax ())
+deriving instance (Data (Context C)) => Data (Syntax C)
 
 instance Pretty (Syntax c) where
   pretty (Literal _ ast) = pretty ast
