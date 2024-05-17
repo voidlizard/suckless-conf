@@ -60,21 +60,21 @@ spec = do
 
     it "reads int" $ do
       c <- readConfig [qc|1|] <&> toJSON
-      c `shouldBe` toJSON [1::Int]
+      c `shouldBe` toJSON [[1::Int]]
 
     it "reads scientific" $ do
       c <- readConfig [qc|1.00|] <&> toJSON
-      c `shouldBe` toJSON [1.00 :: Scientific]
+      c `shouldBe` toJSON [[1.00 :: Scientific]]
 
     it "reads bool" $ do
       t <- readConfig [qc|#t|]  <&> toJSON . head
-      t `shouldBe` toJSON (Bool True)
+      t `shouldBe` toJSON [Bool True]
       f <- readConfig [qc|#f|] <&> toJSON . head
-      f `shouldBe` toJSON (Bool False)
+      f `shouldBe` toJSON [Bool False]
 
     it "reads string" $ do
       s <- readConfig [qc|"somestring"|] <&> toJSON
-      s `shouldBe` toJSON ["somestring" :: String]
+      s `shouldBe` toJSON [["somestring" :: String]]
 
     it "reads array" $ do
       s <- readConfig [qc|(1 2 3 4)|] <&> toJSON . head

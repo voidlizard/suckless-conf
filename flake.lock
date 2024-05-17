@@ -36,19 +36,18 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1715856223,
-        "narHash": "sha256-Q9I6YbvzGuV9yHtxGxxU10LMQf9AdcsecSszPT7PDuc=",
-        "ref": "sexp-parser",
-        "rev": "b0a7f96d6569d16b0d27c2f9477d94e5ee39df66",
-        "revCount": 62,
+        "lastModified": 1715918584,
+        "narHash": "sha256-moioa3ixAZb0y/xxyxUVjSvXoSiDGXy/vAx6B70d2yM=",
+        "ref": "refs/heads/master",
+        "rev": "831879978213a1aed15ac70aa116c33bcbe964b8",
+        "revCount": 63,
         "type": "git",
-        "url": "http://git.hbs2/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA"
+        "url": "http://git.hbs2/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?tag=0.1.3.1"
       },
       "original": {
-        "ref": "sexp-parser",
-        "rev": "b0a7f96d6569d16b0d27c2f9477d94e5ee39df66",
+        "rev": "831879978213a1aed15ac70aa116c33bcbe964b8",
         "type": "git",
-        "url": "http://git.hbs2/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA"
+        "url": "http://git.hbs2/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?tag=0.1.3.1"
       }
     },
     "haskell-flake-utils": {
