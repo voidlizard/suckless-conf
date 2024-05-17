@@ -122,8 +122,7 @@ instance Eq (Syntax c) where
   (==) (List _ a)    (List _ b) = a == b
   (==) _ _ = False
 
-deriving instance (Data (Context ())) => Data (Syntax ())
-deriving instance (Data (Context C)) => Data (Syntax C)
+deriving instance (Data c, Data (Context c)) => Data (Syntax c)
 
 instance Pretty (Syntax c) where
   pretty (Literal _ ast) = pretty ast
