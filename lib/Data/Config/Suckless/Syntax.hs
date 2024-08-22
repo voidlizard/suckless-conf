@@ -2,6 +2,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# Language ViewPatterns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Data.Config.Suckless.Syntax
   ( Syntax(..)
@@ -18,6 +19,9 @@ module Data.Config.Suckless.Syntax
   , pattern LitStrVal
   , pattern LitBoolVal
   , pattern LitScientificVal
+  , pattern StringLike
+  , pattern StringLikeList
+  , pattern Nil
   )
   where
 
@@ -35,6 +39,8 @@ import Data.Aeson.Key
 import Data.Aeson.KeyMap qualified as Aeson
 import Data.Vector qualified as V
 import Data.Traversable (forM)
+import Data.Text qualified as Text
+import Data.Function
 
 import Prettyprinter
 
@@ -56,6 +62,28 @@ pattern LitBoolVal v <- Literal _ (LitBool v)
 
 pattern ListVal :: [Syntax c] -> Syntax c
 pattern ListVal v <- List _ v
+
+
+stringLike :: Syntax c -> Maybe String
+stringLike = \case
+  LitStrVal s -> Just $ Text.unpack s
+  SymbolVal (Id s) -> Just $ Text.unpack s
+  _ -> Nothing
+
+stringLikeList :: [Syntax c] -> [String]
+stringLikeList syn = [ stringLike s | s <- syn ] & takeWhile isJust & catMaybes
+
+
+pattern StringLike :: forall {c} . String -> Syntax c
+pattern StringLike e <- (stringLike -> Just e)
+
+pattern StringLikeList :: forall {c} . [String] -> [Syntax c]
+pattern StringLikeList e <- (stringLikeList -> e)
+
+
+pattern Nil :: forall {c} . Syntax c
+pattern Nil <- ListVal []
+
 
 
 data family Context c :: Type
