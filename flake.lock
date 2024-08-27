@@ -38,16 +38,15 @@
       "locked": {
         "lastModified": 1715918584,
         "narHash": "sha256-moioa3ixAZb0y/xxyxUVjSvXoSiDGXy/vAx6B70d2yM=",
-        "ref": "refs/heads/master",
         "rev": "831879978213a1aed15ac70aa116c33bcbe964b8",
         "revCount": 63,
         "type": "git",
-        "url": "http://git.hbs2/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?tag=0.1.3.1"
+        "url": "http://git.hbs2.net/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?tag=0.1.3.1"
       },
       "original": {
         "rev": "831879978213a1aed15ac70aa116c33bcbe964b8",
         "type": "git",
-        "url": "http://git.hbs2/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?tag=0.1.3.1"
+        "url": "http://git.hbs2.net/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?tag=0.1.3.1"
       }
     },
     "haskell-flake-utils": {
