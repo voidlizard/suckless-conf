@@ -8,6 +8,7 @@ module Data.Config.Suckless.Script
 import Data.Config.Suckless as Exported
 import Data.Config.Suckless.Script.Internal as Exported
 
+import Control.Monad
 import Control.Monad.Reader
 import Data.HashMap.Strict qualified as HM
 import Prettyprinter
