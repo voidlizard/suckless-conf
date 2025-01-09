@@ -329,6 +329,7 @@ isPair = \case
 
 data BindAction c ( m :: Type -> Type)  =
     BindLambda { fromLambda :: [Syntax c] -> RunM c m (Syntax c) }
+  | BindMacro  { fromMacro  :: [Syntax c] -> RunM c m (Syntax c) }
   | BindValue  (Syntax c)
 
 data Bind c ( m :: Type -> Type)  = Bind
@@ -518,6 +519,9 @@ apply name args' = do
     Just (BindValue (Lambda argz body) )  -> do
       applyLambda argz body args'
 
+    Just (BindMacro macro) -> do
+      macro args'
+
     Just (BindValue _) -> do
       throwIO (NotLambda (mkSym @c name))
 
@@ -572,10 +576,24 @@ evalQQ = \case
 eval :: forall c m . ( IsContext c
                      , MonadUnliftIO m
                      , Exception (BadFormException c)
-                     ) => Syntax c -> RunM c m (Syntax c)
-eval syn = handle (handleForm syn) $ do
+                     )
+                       => Syntax c
+                       -> RunM c m (Syntax c)
+eval = eval' mempty
 
-    dict <- ask >>= readTVarIO
+eval' :: forall c m . ( IsContext c
+                     , MonadUnliftIO m
+                     , Exception (BadFormException c)
+                     ) => Dict c m
+                       -> Syntax c
+                       -> RunM c m (Syntax c)
+eval' dict0 syn = handle (handleForm syn) $ do
+
+    dict1 <- ask >>= readTVarIO
+
+    let dict = dict0 <> dict1
+
+    -- liftIO $ print $ show $ "TRACE EXP" <+> pretty syn
 
     -- liftIO $ print $ show $ "TRACE EXP" <+> pretty syn
 
@@ -608,9 +626,27 @@ eval syn = handle (handleForm syn) $ do
       ListVal [ SymbolVal "quot", ListVal b] -> do
         pure  $ mkList  b
 
+      ListVal [ SymbolVal "eval", e ] -> eval e >>= eval
+
       ListVal [SymbolVal "define", SymbolVal what, e] -> do
         ev <- eval e
         bind what ev>> pure nil
+
+      ListVal [SymbolVal "define-macro",  LambdaArgs (name:argz), e] -> do
+        t <- ask
+
+        let runMacro argvalz = do
+             de <- forM (zip argz argvalz) $ \(n,e) -> do
+                     v <- eval e
+                     pure (n, Bind mzero (BindValue v))
+
+             let d0 = HM.fromList de
+
+             eval' d0 e >>= eval' d0
+
+        let b = Bind mzero (BindMacro runMacro)
+        atomically $ modifyTVar t (HM.insert name b)
+        pure nil
 
       ListVal [SymbolVal "lambda", arglist, body] -> do
         pure $ mkForm @c "lambda" [ arglist, body ]
@@ -645,12 +681,17 @@ eval syn = handle (handleForm syn) $ do
         apply_ e' args'
 
       SymbolVal name | HM.member name dict -> do
-        let what = HM.lookup name dict
+
+
+        let what = HM.lookup name dict0 <|> HM.lookup name dict1
                      & maybe (BindValue (mkSym name)) bindAction
+
+        -- liftIO $ print $ "LOOKUP" <+> pretty name <+> pretty what
 
         case what of
           BindValue e  -> pure e
           BindLambda e -> pure $ mkForm "builtin:lambda" [mkSym name]
+          BindMacro _  -> pure nil
 
       e@(SymbolVal name) | not (HM.member name dict) -> do
         pure e
@@ -701,6 +742,11 @@ evalTop syn = lastDef nil <$> mapM eval syn
 
 bindMatch :: Id -> ([Syntax c] -> RunM c m (Syntax c)) -> Dict c m
 bindMatch n fn = HM.singleton n (Bind man (BindLambda fn))
+  where
+    man = Just $ mempty { manName = Just (manNameOf n) }
+
+bindMacro :: Id -> ([Syntax c] -> RunM c m (Syntax c)) -> Dict c m
+bindMacro n fn = HM.singleton n (Bind man (BindMacro fn))
   where
     man = Just $ mempty { manName = Just (manNameOf n) }
 
