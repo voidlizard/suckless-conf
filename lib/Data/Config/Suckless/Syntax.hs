@@ -29,6 +29,7 @@ module Data.Config.Suckless.Syntax
   , pattern LitBoolVal
   , pattern LitScientificVal
   , pattern StringLike
+  , pattern TextLike
   , pattern StringLikeList
   , pattern Nil
   , pattern OpaqueVal
@@ -82,21 +83,28 @@ pattern LitBoolVal v <- Literal _ (LitBool v)
 pattern ListVal :: [Syntax c] -> Syntax c
 pattern ListVal v <- List _ v
 
-
 stringLike :: Syntax c -> Maybe String
 stringLike = \case
   LitStrVal s -> Just $ Text.unpack s
   SymbolVal (Id s) -> Just $ Text.unpack s
   _ -> Nothing
 
+textLike :: Syntax c -> Maybe Text
+textLike = \case
+  LitStrVal s -> Just s
+  SymbolVal (Id s) -> Just s
+  x -> Nothing
+
 stringLikeList :: [Syntax c] -> [String]
 stringLikeList syn = [ stringLike s | s <- syn ] & takeWhile isJust & catMaybes
 
 data ByteStringSorts = ByteStringLazy LBS.ByteString | ByteStringStrict ByteString
 
-
 pattern StringLike :: forall {c} . String -> Syntax c
 pattern StringLike e <- (stringLike -> Just e)
+
+pattern TextLike :: forall {c} . Text -> Syntax c
+pattern TextLike e <- (textLike -> Just e)
 
 pattern StringLikeList :: forall {c} . [String] -> [Syntax c]
 pattern StringLikeList e <- (stringLikeList -> e)
@@ -139,7 +147,7 @@ class IsLiteral a where
 
 newtype Id =
   Id Text
-  deriving newtype (IsString,Pretty)
+  deriving newtype (IsString,Pretty,Semigroup,Monoid)
   deriving stock (Data,Generic,Show,Eq,Ord)
 
 type ForOpaque a = (Typeable a, Eq a)

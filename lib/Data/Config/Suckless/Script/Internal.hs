@@ -23,6 +23,8 @@ import Data.Data
 import Data.Function as Export
 import Data.Functor as Export
 import Data.Hashable
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HS
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HM
 import Data.Kind
@@ -393,8 +395,20 @@ makeDict w = execWriter ( fromMakeDict w )
 entry :: Dict c m  -> MakeDictM c m ()
 entry = tell
 
-hide :: MakeDictM c m ()
-hide = pure ()
+hide ::  Bind c m -> Bind c m
+hide (Bind w x) = Bind (Just updatedMan) x
+  where
+    updatedMan = case w of
+      Nothing -> mempty { manHidden = True }
+      Just man -> man { manHidden = True }
+
+hidden :: MakeDictM c m () -> MakeDictM c m ()
+hidden = censor (HM.map hide)
+
+hidePrefix :: Id -> MakeDictM c m () -> MakeDictM c m ()
+hidePrefix (Id p) = censor (HM.filterWithKey exclude)
+  where
+    exclude (Id k) _ = not (Text.isPrefixOf p k)
 
 desc :: Doc ann -> MakeDictM c m () -> MakeDictM c m ()
 desc txt = censor (HM.map setDesc)
@@ -413,7 +427,6 @@ returns tp txt = censor (HM.map setReturns)
   where
     w0 = mempty { manReturns = Just (ManReturns tp txt) }
     setReturns (Bind w x) = Bind (Just (maybe w0 (<>w0) w)) x
-
 
 addSynopsis :: ManSynopsis -> Bind c m -> Bind c m
 addSynopsis synopsis (Bind w x) = Bind (Just updatedMan) x
@@ -489,8 +502,10 @@ apply_ :: forall c m . ( IsContext c
 
 apply_ s args = case s of
   ListVal [SymbolVal "builtin:lambda", SymbolVal n]  -> apply n args
-  SymbolVal "quot"       -> pure $ mkList args
-  SymbolVal "quasiquot"  -> mkList <$> mapM evalQQ args
+  SymbolVal "quot"        -> pure $ mkList args
+  SymbolVal "quote"       -> pure $ mkList args
+  SymbolVal "quasiquot"   -> mkList <$> mapM (evalQQ mempty) args
+  SymbolVal "quasiquote"  -> mkList <$> mapM (evalQQ mempty) args
   SymbolVal   what  -> apply what args
   Lambda d body     -> applyLambda d body args
   e                  -> throwIO $ NotLambda e
@@ -507,7 +522,7 @@ apply "quot" args = do
   pure $ mkList args
 
 apply "quasiquot" args = do
-  mkList <$> mapM evalQQ args
+  mkList <$> mapM (evalQQ mempty) args
 
 apply name args' = do
   -- notice $ red "APPLY" <+> pretty name
@@ -563,13 +578,16 @@ bindBuiltins  dict = do
 evalQQ :: forall c m . ( IsContext c
                      , MonadUnliftIO m
                      , Exception (BadFormException c)
-                     ) => Syntax c -> RunM c m (Syntax c)
-evalQQ = \case
-  SymbolVal (Id w) | Text.isPrefixOf "," w -> do
-    let what = Id (Text.drop 1 w)
-    lookupValue what >>= eval
+                     ) => Dict c m
+                       -> Syntax c -> RunM c m (Syntax c)
+evalQQ d0 = \case
+  -- SymbolVal (Id w) | Text.isPrefixOf "," w -> do
+  --   let what = Id (Text.drop 1 w)
+  --   lookupValue what >>= eval
 
-  List c es   -> List c <$> mapM evalQQ es
+  ListVal [ SymbolVal ",", w ] -> eval' d0 w
+
+  List c es   -> List c <$> mapM (evalQQ d0) es
 
   other       -> pure other
 
@@ -595,8 +613,6 @@ eval' dict0 syn = handle (handleForm syn) $ do
 
     -- liftIO $ print $ show $ "TRACE EXP" <+> pretty syn
 
-    -- liftIO $ print $ show $ "TRACE EXP" <+> pretty syn
-
     case syn of
 
       SymbolVal (Id s) | Text.isPrefixOf ":" s -> do
@@ -617,11 +633,14 @@ eval' dict0 syn = handle (handleForm syn) $ do
       ListVal [ SymbolVal "'", x] -> do
         pure  x
 
+      ListVal [ SymbolVal ",", x] -> do
+        pure  x
+
       ListVal [ SymbolVal "`", ListVal b] -> do
-        mkList <$> mapM evalQQ b
+        mkList <$> mapM (evalQQ dict) b
 
       ListVal [ SymbolVal "quasiquot", ListVal b] -> do
-        mkList <$> mapM evalQQ b
+        mkList <$> mapM (evalQQ dict) b
 
       ListVal [ SymbolVal "quot", ListVal b] -> do
         pure  $ mkList  b
@@ -921,7 +940,7 @@ internalEntries = do
           throwIO (BadFormException @C nil)
 
     entry $ bindMatch "quasiquot" $ \case
-      [ syn ] -> mkList . List.singleton <$> evalQQ syn
+      [ syn ] -> mkList . List.singleton <$> (evalQQ mempty) syn
       _ -> do
           throwIO (BadFormException @C nil)
 

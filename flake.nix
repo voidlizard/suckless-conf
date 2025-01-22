@@ -7,7 +7,7 @@ inputs = {
 
     fuzzy.url =
       # "git+http://git.hbs2/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?ref=sexp-parser&rev=bd3a38904864d5cc333974e7b029412607b46871";
-      "git+http://git.hbs2.net/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?rev=086d24061aa8ad7cf0ec189ccfd3f207cc73d366";
+      "git+http://git.hbs2.net/GmcLB9gEPT4tbx9eyQiECwsu8oPyEh6qKEpQDtyBWVPA?rev=9e41a735a8bdb02b2b5c405341d8b3b98242f021";
 
 };
 
